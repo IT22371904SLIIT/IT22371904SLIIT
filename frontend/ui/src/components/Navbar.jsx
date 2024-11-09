@@ -2,39 +2,39 @@ import React from 'react';
 
 const Navbar = () => {
   return (
-    <nav className="bg-darkblue text-red px-8 py-4 shadow-lg">
+    <nav className="bg-black text-white px-8 py-4 shadow-lg mt-2 mb-2"> {/* Added mb-2 for small gap */}
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo / Brand Name */}
-        <div className="text-2xl font-bold cursor-pointer hover:text-white transition">
+        <div className="text-2xl font-bold cursor-pointer hover:text-orange-500 transition">
           Dmax Lanka PVT LTD
         </div>
 
         {/* Navbar Links */}
         <div className="hidden md:flex space-x-8">
-          <a href="#home" className="hover:bg-white hover:text-darkblue rounded-full px-3 py-1 transition">
+          <a href="#home" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
             Home
           </a>
-          <a href="#create-order" className="hover:bg-white hover:text-darkblue rounded-full px-3 py-1 transition">
+          <a href="#create-order" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
             Create Order
           </a>
-          <a href="#orders-list" className="hover:bg-white hover:text-darkblue rounded-full px-3 py-1 transition">
+          <a href="#orders-list" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
             Orders List
           </a>
-          <a href="#contact" className="hover:bg-white hover:text-darkblue rounded-full px-3 py-1 transition">
+          <a href="#contact" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
             Contact
           </a>
         </div>
 
-        {/* Button */}
+        {/* Log In Button */}
         <div className="hidden md:block">
-          <button className="bg-darkblue px-4 py-2 rounded-full hover:bg-white hover:text-darkblue transition">
+          <button className="bg-gray-400 text-white px-4 py-2 rounded-full hover:bg-orange-500 hover:text-white transition">
             Log In
           </button>
         </div>
 
         {/* Mobile Menu Icon */}
         <div className="md:hidden">
-          <button className="text-red focus:outline-none focus:ring-2 focus:ring-white">
+          <button className="text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
             <svg
               className="w-6 h-6"
               fill="none"
