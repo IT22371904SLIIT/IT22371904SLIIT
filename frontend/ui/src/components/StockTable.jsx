@@ -1,19 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Use useNavigate instead of useHistory
 
 const StockTable = () => {
   const [stocks, setStocks] = useState([]);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate(); // Use useNavigate for navigation
 
   useEffect(() => {
-    axios.get('/api/stocks')
+    axios.get('http://localhost:4000/api/stocks')
       .then(response => {
-        console.log(response.data); // Check the response structure
+        console.log(response.data);
         setStocks(response.data);
       })
       .catch(error => {
         console.error("There was an error fetching the stocks!", error);
+        setError("There was an error fetching the data.");
       });
   }, []);
+
+  // Function to handle delete action
+  const handleDelete = (id) => {
+    axios.delete(`http://localhost:4000/api/stocks/${id}`)
+      .then(() => {
+        // Remove the deleted stock from the list
+        setStocks(stocks.filter(stock => stock._id !== id));
+        alert('Stock deleted successfully');
+      })
+      .catch(error => {
+        console.error("There was an error deleting the stock!", error);
+        alert('Error deleting stock');
+      });
+  };
+
+  // Function to navigate to update page with stock data
+  const handleUpdate = (id) => {
+    navigate(`/update-stock/${id}`); // Use navigate instead of history.push
+  };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
@@ -26,22 +49,41 @@ const StockTable = () => {
               <th className="py-3 px-6 text-left text-xs font-medium uppercase tracking-wider">Colour</th>
               <th className="py-3 px-6 text-left text-xs font-medium uppercase tracking-wider">Quantity</th>
               <th className="py-3 px-6 text-left text-xs font-medium uppercase tracking-wider">Price</th>
+              <th className="py-3 px-6 text-left text-xs font-medium uppercase tracking-wider">Actions</th> {/* Added Actions Column */}
             </tr>
           </thead>
           <tbody>
-            {Array.isArray(stocks) && stocks.length > 0 ? (
-              stocks.map((stock, index) => (
-                <tr key={stock._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
-                  <td className="py-4 px-6 text-gray-700">{stock.code}</td>
-                  <td className="py-4 px-6 text-gray-700">{stock.colour}</td>
-                  <td className="py-4 px-6 text-gray-700">{stock.quantity}</td>
-                  <td className="py-4 px-6 text-gray-700">${stock.price}</td>
-                </tr>
-              ))
-            ) : (
+            {error ? (
               <tr>
-                <td colSpan="4" className="py-4 px-6 text-center text-gray-700">Bags not available</td>
+                <td colSpan="5" className="py-4 px-6 text-center text-red-500">{error}</td>
               </tr>
+            ) : (
+              Array.isArray(stocks) && stocks.length > 0 ? (
+                stocks.map((stock, index) => (
+                  <tr key={stock._id} className={index % 2 === 0 ? "bg-gray-100" : "bg-white"}>
+                    <td className="py-4 px-6 text-gray-700">{stock.code}</td>
+                    <td className="py-4 px-6 text-gray-700">{stock.colour}</td>
+                    <td className="py-4 px-6 text-gray-700">{stock.quantity}</td>
+                    <td className="py-4 px-6 text-gray-700">Rs. {parseFloat(stock.price).toFixed(2)}</td>
+                    <td className="py-4 px-6 text-gray-700">
+                      <button
+                        onClick={() => handleUpdate(stock._id)}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg mr-2">
+                        Update
+                      </button>
+                      <button
+                        onClick={() => handleDelete(stock._id)}
+                        className="px-4 py-2 bg-red-500 text-white rounded-lg">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="py-4 px-6 text-center text-gray-700">No stocks available</td>
+                </tr>
+              )
             )}
           </tbody>
         </table>

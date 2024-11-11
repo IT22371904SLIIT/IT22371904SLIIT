@@ -15,6 +15,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.get("/", (req, res) => res.send("Hello world!"));
 app.use("/api/stocks", routes);
 
-const PORT = 4000;
+const PORT =11000;
 
 app.listen(PORT, () => console.log(`Server running on PORT ${PORT}`));

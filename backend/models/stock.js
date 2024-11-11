@@ -19,7 +19,7 @@ const StockSchema = new mongoose.Schema({
     },
     tot:{
         type:Number,
-        required:true,
+        
     },
 });
 

@@ -8,6 +8,8 @@ const AddBagForm = () => {
     quantity: '',
     price: ''
   });
+  const [loading, setLoading] = useState(false); // To manage loading state
+  const [error, setError] = useState(''); // To manage error messages
 
   const handleChange = (e) => {
     setFormData({
@@ -16,31 +18,38 @@ const AddBagForm = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(''); // Clear previous errors
 
-    // Send POST request to the backend to add a new bag
-    axios.post('/api/stocks', formData)
-      .then(response => {
-        console.log('Bag added successfully:', response.data);
-        
-        // Clear the form after successful submission
-        setFormData({
-          code: '',
-          colour: '',
-          quantity: '',
-          price: ''
-        });
-      })
-      .catch(error => {
-        console.error('There was an error adding the bag!', error);
-        alert("Failed to add the bag. Please try again.");
+    try {
+      // Send POST request to the backend to add a new bag
+      const response = await axios.post('http://localhost:4400/api/stocks', formData);
+      console.log('Bag added successfully:', response.data);
+
+      // Clear the form after successful submission
+      setFormData({
+        code: '',
+        colour: '',
+        quantity: '',
+        price: ''
       });
+
+      // Optionally, show a success message
+      alert('Bag added successfully!');
+    } catch (error) {
+      console.error('Error adding the bag:', error);
+      setError('Failed to add the bag. Please try again.');
+    } finally {
+      setLoading(false); // End the loading state
+    }
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Add New Bag</h1>
+      {error && <div className="text-red-500 mb-4">{error}</div>}
       <form className="w-full max-w-lg bg-white p-8 rounded-lg shadow-lg" onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="code">
@@ -101,9 +110,10 @@ const AddBagForm = () => {
         <div className="flex items-center justify-between">
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            disabled={loading}
+            className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Add to Stock
+            {loading ? 'Adding...' : 'Add to Stock'}
           </button>
         </div>
       </form>
