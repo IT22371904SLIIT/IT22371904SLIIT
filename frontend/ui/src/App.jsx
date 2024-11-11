@@ -1,19 +1,57 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
+import LoginPage from './components/LoginPage';
+import Baglist from './components/Baglist';
+import AddBagForm from './components/Addbag'; // Import AddBagForm component
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
-    <>
-     <Navbar/>
-     <Sidebar/>
-    </>
-  )
-}
+    <Router>
+      <div className="flex flex-col h-screen">
+        {isLoggedIn && <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />}
+        
+        <div className="flex flex-1 mt-0">
+          {isLoggedIn && <Sidebar />}
 
-export default App
+          <div className="relative flex-1 flex justify-center items-center overflow-hidden">
+            {!isLoggedIn && (
+              <>
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: "url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3yhDjvz4BNWkWaZJmvnWLxMRclyPkNGQiow&s)",
+                    opacity: 0.75,
+                  }}
+                ></div>
+
+                <div className="relative z-10 flex flex-col items-center text-white">
+                  <div className="text-4xl italic font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-black to-gray-800 drop-shadow-xl shadow-gray-900">
+                    Welcome to Sahan Dmax Lanka Pvt Ltd
+                  </div>
+
+                  <LoginPage setIsLoggedIn={setIsLoggedIn} />
+                </div>
+              </>
+            )}
+
+            {isLoggedIn && (
+              <div className="flex-1 flex justify-center items-center">
+                <Routes>
+                  <Route path="/bags-list" element={<Baglist />} />
+                  <Route path="/add-new-bag" element={<AddBagForm />} />
+                  {/* Add other routes as needed */}
+                </Routes>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Router>
+  );
+};
+
+export default App;

@@ -1,54 +1,57 @@
 import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setIsLoggedIn(false); // Update the state to reflect logout
+    navigate('/login'); // Redirect to login page
+  };
+
   return (
-    <nav className="bg-black text-white px-8 py-4 shadow-lg mt-2 mb-2"> {/* Added mb-2 for small gap */}
+    <nav className="bg-black text-white px-8 py-4 shadow-lg mt-2 mb-2">
       <div className="container mx-auto flex justify-between items-center">
-        {/* Logo / Brand Name */}
         <div className="text-2xl font-bold cursor-pointer hover:text-orange-500 transition">
           Dmax Lanka PVT LTD
         </div>
-
-        {/* Navbar Links */}
         <div className="hidden md:flex space-x-8">
-          <a href="#home" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
+          <Link
+            to="/home"
+            className={`hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ pointerEvents: !isLoggedIn ? 'none' : 'auto' }}
+          >
             Home
-          </a>
-          <a href="#create-order" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
+          </Link>
+          <Link
+            to="/create-order"
+            className={`hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ pointerEvents: !isLoggedIn ? 'none' : 'auto' }}
+          >
             Create Order
-          </a>
-          <a href="#orders-list" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
+          </Link>
+          <Link
+            to="/orders-list"
+            className={`hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ pointerEvents: !isLoggedIn ? 'none' : 'auto' }}
+          >
             Orders List
-          </a>
-          <a href="#contact" className="hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition">
+          </Link>
+          <Link
+            to="/contact"
+            className={`hover:bg-orange-500 hover:text-white rounded-full px-3 py-1 transition ${!isLoggedIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{ pointerEvents: !isLoggedIn ? 'none' : 'auto' }}
+          >
             Contact
-          </a>
+          </Link>
         </div>
-
-        {/* Log In Button */}
         <div className="hidden md:block">
-          <button className="bg-gray-400 text-white px-4 py-2 rounded-full hover:bg-orange-500 hover:text-white transition">
-            Log In
-          </button>
-        </div>
-
-        {/* Mobile Menu Icon */}
-        <div className="md:hidden">
-          <button className="text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              ></path>
-            </svg>
+          <button
+            onClick={handleLogout}
+            className={`bg-gray-400 text-white px-4 py-2 rounded-full hover:bg-orange-500 hover:text-white transition ${isLoggedIn ? '' : 'opacity-50 cursor-not-allowed'}`}
+            style={{ pointerEvents: isLoggedIn ? 'auto' : 'none' }}
+          >
+            Log Out
           </button>
         </div>
       </div>
