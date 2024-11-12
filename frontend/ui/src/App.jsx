@@ -4,7 +4,9 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import LoginPage from './components/LoginPage';
 import Baglist from './components/Baglist';
-import AddBagForm from './components/Addbag'; // Import AddBagForm component
+import AddBagForm from './components/Addbag';
+import UpdateData from './components/Updatedata';
+import OrderTable from './components/Addorder'; // Import OrderTable component
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -43,6 +45,8 @@ const App = () => {
                 <Routes>
                   <Route path="/bags-list" element={<Baglist />} />
                   <Route path="/add-new-bag" element={<AddBagForm />} />
+                  <Route path="/update-stock/:id" element={<UpdateData />} />
+                  <Route path="/create-order" element={<OrderTable />} /> {/* Add route for OrderTable */}
                   {/* Add other routes as needed */}
                 </Routes>
               </div>
