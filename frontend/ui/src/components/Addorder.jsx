@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const OrderTable = () => {
     const [rows, setRows] = useState([]);
@@ -31,8 +32,6 @@ const OrderTable = () => {
             const quantity = newRows[index].OQuantity;
             const price = newRows[index].OPrice;
             const discount = newRows[index].ODiscount;
-
-            // Calculate total with discount as a percentage and format to 2 decimal places
             const discountMultiplier = (100 - discount) / 100;
             newRows[index].OTotal = parseFloat((quantity * price * discountMultiplier).toFixed(2));
         }
@@ -43,8 +42,8 @@ const OrderTable = () => {
 
     const updateGrandTotal = (updatedRows) => {
         const total = updatedRows.reduce((sum, row) => sum + row.OTotal, 0);
-        setGrandTotal(parseFloat(total.toFixed(2)));  // Round to 2 decimal places
-        setSubtotal(parseFloat((total * ((100 - localDiscount) / 100)).toFixed(2))); // Calculate subtotal with local discount, rounded to 2 decimal places
+        setGrandTotal(parseFloat(total.toFixed(2)));
+        setSubtotal(parseFloat((total * ((100 - localDiscount) / 100)).toFixed(2)));
     };
 
     const handleLocalDiscountChange = (e) => {
@@ -55,6 +54,35 @@ const OrderTable = () => {
 
     const finish = () => {
         alert(`Order finished! Grand Total: ${grandTotal.toFixed(2)}, Subtotal after Discount: ${subtotal.toFixed(2)}`);
+    };
+
+    const createOrder = () => {
+        const orderData = {
+            customerName,
+            billingTime,
+            invoiceNumber,
+            rows,
+            grandTotal,
+            localDiscount,
+            subtotal,
+            billedBy,
+        };
+
+        axios.post('/api/orders', orderData)
+            .then(response => {
+                alert('Order created successfully!');
+                setCustomerName('');
+                setRows([]);
+                setBillingTime('');
+                setInvoiceNumber('');
+                setGrandTotal(0);
+                setLocalDiscount(0);
+                setSubtotal(0);
+                setBilledBy('');
+            })
+            .catch(error => {
+                console.error('There was an error creating the order!', error);
+            });
     };
 
     return (
@@ -68,7 +96,18 @@ const OrderTable = () => {
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                />
+            </div>
+            <div className="mb-4">
+                <label htmlFor="billedBy" className="block text-sm font-medium text-gray-700">Billed By:</label>
+                <input
+                    type="text"
+                    id="billedBy"
+                    value={billedBy}
+                    onChange={(e) => setBilledBy(e.target.value)}
+                    required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                 />
             </div>
             <div className="mb-4">
@@ -99,7 +138,7 @@ const OrderTable = () => {
                                     value={row.ODescription}
                                     onChange={(e) => handleInputChange(index, 'ODescription', e.target.value)}
                                     required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -108,7 +147,7 @@ const OrderTable = () => {
                                     value={row.OColour}
                                     onChange={(e) => handleInputChange(index, 'OColour', e.target.value)}
                                     required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -117,7 +156,7 @@ const OrderTable = () => {
                                     value={row.OQuantity}
                                     onChange={(e) => handleInputChange(index, 'OQuantity', parseInt(e.target.value))}
                                     required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -126,7 +165,7 @@ const OrderTable = () => {
                                     value={row.OPrice}
                                     onChange={(e) => handleInputChange(index, 'OPrice', parseFloat(e.target.value))}
                                     required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -135,67 +174,33 @@ const OrderTable = () => {
                                     value={row.ODiscount}
                                     onChange={(e) => handleInputChange(index, 'ODiscount', parseFloat(e.target.value))}
                                     required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                                 />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                                <input
-                                    type="number"
-                                    value={row.OTotal.toFixed(2)}
-                                    readOnly
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                />
+                                {row.OTotal}
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
-
-            <div className="flex justify-between mt-4">
-                <div className="w-1/2">
-                    <label htmlFor="billedBy" className="block text-sm font-medium text-gray-700">Billed by:</label>
-                    <input
-                        type="text"
-                        id="billedBy"
-                        value={billedBy}
-                        onChange={(e) => setBilledBy(e.target.value)}
-                        required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                </div>
-                <div className="flex gap-4 justify-end items-end">
-                    <button
-                        type="button"
-                        onClick={addRow}
-                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    >
-                        Add Row
-                    </button>
-                    <button
-                        type="button"
-                        onClick={finish}
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    >
-                        Finish Order
-                    </button>
-                </div>
-            </div>
-
+            <button onClick={addRow} className="bg-blue-500 text-white py-2 px-4 rounded mt-4">Add Row</button>
             <div className="mt-4">
-                <label htmlFor="localDiscount" className="block text-sm font-medium text-gray-700">Local Discount (%)</label>
+                <label htmlFor="localDiscount" className="block text-sm font-medium text-gray-700">Local Discount (%):</label>
                 <input
                     type="number"
                     id="localDiscount"
                     value={localDiscount}
                     onChange={handleLocalDiscountChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                 />
             </div>
-
             <div className="mt-4">
-                <p><strong>Grand Total: </strong>{grandTotal.toFixed(2)}</p>
-                <p><strong>Subtotal after Discount: </strong>{subtotal.toFixed(2)}</p>
+                <div>Subtotal: {subtotal.toFixed(2)}</div>
+                <div>Grand Total: {grandTotal.toFixed(2)}</div>
             </div>
+            <button onClick={finish} className="bg-green-500 text-white py-2 px-4 rounded mt-4">Finish</button>
+            <button onClick={createOrder} className="bg-blue-500 text-white py-2 px-4 rounded mt-4">Create Order</button>
         </div>
     );
 };
