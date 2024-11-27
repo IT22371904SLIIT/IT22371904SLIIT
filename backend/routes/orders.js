@@ -6,38 +6,62 @@ const Order = require("../models/order");
 router.get("/test", (req, res) => res.send("Order routes working..."));
 
 // Create new order
-router.post("/", (req, res) => {
-    Order.create(req.body)
-        .then(() => res.json({ msg: "Order added successfully..." }))
-        .catch(() => res.status(400).json({ msg: "Order addition failed..." }));
+router.post("/", async (req, res) => {
+  try {
+    const newOrder = new Order(req.body);
+    await newOrder.save();
+    res.status(201).json({ msg: "Order added successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ msg: "Order addition failed." });
+  }
 });
 
 // Fetch all orders
-router.get("/", (req, res) => {
-    Order.find()
-        .then(orders => res.json(orders))
-        .catch(() => res.status(400).json({ msg: "Failed to fetch orders..." }));
+router.get("/", async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ msg: "Failed to fetch orders." });
+  }
 });
 
 // Fetch a single order by ID
-router.get("/:id", (req, res) => {
-    Order.findById(req.params.id)
-        .then(order => res.json(order))
-        .catch(() => res.status(400).json({ msg: "Failed to fetch order..." }));
+router.get("/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ msg: "Order not found." });
+    res.json(order);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ msg: "Failed to fetch order." });
+  }
 });
 
 // Update an order by ID
-router.put("/:id", (req, res) => {
-    Order.findByIdAndUpdate(req.params.id, req.body, { new: true })
-        .then(() => res.json({ msg: "Update successful..." }))
-        .catch(() => res.status(400).json({ msg: "Failed to update order..." }));
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedOrder = await Order.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedOrder) return res.status(404).json({ msg: "Order not found." });
+    res.json({ msg: "Update successful.", updatedOrder });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ msg: "Failed to update order." });
+  }
 });
 
 // Delete an order by ID
-router.delete("/:id", (req, res) => {
-    Order.findByIdAndDelete(req.params.id)
-        .then(() => res.json({ msg: "Deleted successfully..." }))
-        .catch(() => res.status(400).json({ msg: "Failed to delete order..." }));
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedOrder = await Order.findByIdAndDelete(req.params.id);
+    if (!deletedOrder) return res.status(404).json({ msg: "Order not found." });
+    res.json({ msg: "Deleted successfully." });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ msg: "Failed to delete order." });
+  }
 });
 
 module.exports = router;

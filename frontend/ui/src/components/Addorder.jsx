@@ -1,208 +1,279 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-const OrderTable = () => {
-    const [rows, setRows] = useState([]);
-    const [customerName, setCustomerName] = useState('');
-    const [billingTime, setBillingTime] = useState('');
-    const [invoiceNumber, setInvoiceNumber] = useState('');
-    const [grandTotal, setGrandTotal] = useState(0);
-    const [localDiscount, setLocalDiscount] = useState(0);
-    const [subtotal, setSubtotal] = useState(0);
-    const [billedBy, setBilledBy] = useState('');
+const OrderForm = () => {
+  const [form, setForm] = useState({
+    CustomerName: "",
+    Date: new Date().toLocaleString(),
+    InvoiceNumber: generateInvoiceNumber(),
+    bags: [],
+    GrandTotal: 0,
+    LastDiscount: 0,
+    SubTotal: 0,
+    BilledBy: "",
+  });
 
-    useEffect(() => {
-        const now = new Date();
-        const billingTimeString = now.toLocaleString();
-        const invoiceNumberString = `${now.getFullYear().toString().slice(2)}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
+  const [currentBag, setCurrentBag] = useState({
+    BagCode: "",
+    BagColour: "",
+    BagQuantity: 0,
+    BagPrice: 0,
+    BagDiscount: 0,
+    BagTotal: 0,
+  });
 
-        setBillingTime(billingTimeString);
-        setInvoiceNumber(invoiceNumberString);
-    }, []);
+  useEffect(() => {
+    const bagTotal =
+      currentBag.BagPrice *
+      currentBag.BagQuantity *
+      (1 - currentBag.BagDiscount / 100);
+    setCurrentBag((prevBag) => ({
+      ...prevBag,
+      BagTotal: bagTotal.toFixed(2),
+    }));
+  }, [currentBag.BagPrice, currentBag.BagQuantity, currentBag.BagDiscount]);
 
-    const addRow = () => {
-        setRows([...rows, { ODescription: '', OColour: '', OQuantity: 0, OPrice: 0, ODiscount: 0, OTotal: 0.00 }]);
-    };
-
-    const handleInputChange = (index, field, value) => {
-        const newRows = [...rows];
-        newRows[index][field] = value;
-
-        if (field === 'OQuantity' || field === 'OPrice' || field === 'ODiscount') {
-            const quantity = newRows[index].OQuantity;
-            const price = newRows[index].OPrice;
-            const discount = newRows[index].ODiscount;
-            const discountMultiplier = (100 - discount) / 100;
-            newRows[index].OTotal = parseFloat((quantity * price * discountMultiplier).toFixed(2));
-        }
-
-        setRows(newRows);
-        updateGrandTotal(newRows);
-    };
-
-    const updateGrandTotal = (updatedRows) => {
-        const total = updatedRows.reduce((sum, row) => sum + row.OTotal, 0);
-        setGrandTotal(parseFloat(total.toFixed(2)));
-        setSubtotal(parseFloat((total * ((100 - localDiscount) / 100)).toFixed(2)));
-    };
-
-    const handleLocalDiscountChange = (e) => {
-        const discount = parseFloat(e.target.value) || 0;
-        setLocalDiscount(discount);
-        setSubtotal(parseFloat((grandTotal * ((100 - discount) / 100)).toFixed(2)));
-    };
-
-    const finish = () => {
-        alert(`Order finished! Grand Total: ${grandTotal.toFixed(2)}, Subtotal after Discount: ${subtotal.toFixed(2)}`);
-    };
-
-    const createOrder = () => {
-        const orderData = {
-            customerName,
-            billingTime,
-            invoiceNumber,
-            rows,
-            grandTotal,
-            localDiscount,
-            subtotal,
-            billedBy,
-        };
-
-        axios.post('/api/orders', orderData)
-            .then(response => {
-                alert('Order created successfully!');
-                setCustomerName('');
-                setRows([]);
-                setBillingTime('');
-                setInvoiceNumber('');
-                setGrandTotal(0);
-                setLocalDiscount(0);
-                setSubtotal(0);
-                setBilledBy('');
-            })
-            .catch(error => {
-                console.error('There was an error creating the order!', error);
-            });
-    };
-
-    return (
-        <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4">Order Entry</h2>
-            <div className="mb-4">
-                <label htmlFor="customerName" className="block text-sm font-medium text-gray-700">Customer Name:</label>
-                <input
-                    type="text"
-                    id="customerName"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                />
-            </div>
-            <div className="mb-4">
-                <label htmlFor="billedBy" className="block text-sm font-medium text-gray-700">Billed By:</label>
-                <input
-                    type="text"
-                    id="billedBy"
-                    value={billedBy}
-                    onChange={(e) => setBilledBy(e.target.value)}
-                    required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                />
-            </div>
-            <div className="mb-4">
-                <label htmlFor="billingTime" className="block text-sm font-medium text-gray-700">Billing Time:</label>
-                <span id="billingTime" className="block mt-1 text-gray-900">{billingTime}</span>
-            </div>
-            <div className="mb-4">
-                <label htmlFor="invoiceNumber" className="block text-sm font-medium text-gray-700">Invoice Number:</label>
-                <span id="invoiceNumber" className="block mt-1 text-gray-900">{invoiceNumber}</span>
-            </div>
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Colour</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (%)</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {rows.map((row, index) => (
-                        <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <input
-                                    type="text"
-                                    value={row.ODescription}
-                                    onChange={(e) => handleInputChange(index, 'ODescription', e.target.value)}
-                                    required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                                />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <input
-                                    type="text"
-                                    value={row.OColour}
-                                    onChange={(e) => handleInputChange(index, 'OColour', e.target.value)}
-                                    required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                                />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <input
-                                    type="number"
-                                    value={row.OQuantity}
-                                    onChange={(e) => handleInputChange(index, 'OQuantity', parseInt(e.target.value))}
-                                    required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                                />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <input
-                                    type="number"
-                                    value={row.OPrice}
-                                    onChange={(e) => handleInputChange(index, 'OPrice', parseFloat(e.target.value))}
-                                    required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                                />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <input
-                                    type="number"
-                                    value={row.ODiscount}
-                                    onChange={(e) => handleInputChange(index, 'ODiscount', parseFloat(e.target.value))}
-                                    required
-                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                                />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                {row.OTotal}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            <button onClick={addRow} className="bg-blue-500 text-white py-2 px-4 rounded mt-4">Add Row</button>
-            <div className="mt-4">
-                <label htmlFor="localDiscount" className="block text-sm font-medium text-gray-700">Local Discount (%):</label>
-                <input
-                    type="number"
-                    id="localDiscount"
-                    value={localDiscount}
-                    onChange={handleLocalDiscountChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                />
-            </div>
-            <div className="mt-4">
-                <div>Subtotal: {subtotal.toFixed(2)}</div>
-                <div>Grand Total: {grandTotal.toFixed(2)}</div>
-            </div>
-            <button onClick={finish} className="bg-green-500 text-white py-2 px-4 rounded mt-4">Finish</button>
-            <button onClick={createOrder} className="bg-blue-500 text-white py-2 px-4 rounded mt-4">Create Order</button>
-        </div>
+  useEffect(() => {
+    const grandTotal = form.bags.reduce(
+      (acc, bag) => acc + parseFloat(bag.BagTotal),
+      0
     );
+    const subTotal = grandTotal - grandTotal * (form.LastDiscount / 100);
+    setForm((prevForm) => ({
+      ...prevForm,
+      GrandTotal: grandTotal.toFixed(2),
+      SubTotal: subTotal.toFixed(2),
+    }));
+  }, [form.bags, form.LastDiscount]);
+
+  function generateInvoiceNumber() {
+    const now = new Date();
+    return `INV${now.getFullYear()}${("0" + (now.getMonth() + 1)).slice(
+      -2
+    )}${("0" + now.getDate()).slice(-2)}${now
+      .toTimeString()
+      .slice(0, 8)
+      .replace(/:/g, "")}`;
+  }
+
+  const addBag = () => {
+    const updatedBags = [...form.bags, { ...currentBag }];
+    setForm((prevForm) => ({
+      ...prevForm,
+      bags: updatedBags,
+    }));
+    setCurrentBag({
+      BagCode: "",
+      BagColour: "",
+      BagQuantity: 0,
+      BagPrice: 0,
+      BagDiscount: 0,
+      BagTotal: 0,
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+
+    if (name === "LastDiscount") {
+      const subTotal = form.GrandTotal - form.GrandTotal * (value / 100);
+      setForm((prevForm) => ({
+        ...prevForm,
+        SubTotal: subTotal.toFixed(2),
+      }));
+    }
+  };
+
+  const handleBagChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentBag((prevBag) => ({
+      ...prevBag,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:4000/api/orders", form);
+      alert("Order created successfully!");
+      setForm({
+        CustomerName: "",
+        Date: new Date().toLocaleString(),
+        InvoiceNumber: generateInvoiceNumber(),
+        bags: [],
+        GrandTotal: 0,
+        LastDiscount: 0,
+        SubTotal: 0,
+        BilledBy: "",
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create order.");
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-3xl mx-auto p-8 bg-gradient-to-r from-green-400 via-teal-500 to-blue-600 rounded-xl shadow-lg"
+    >
+      <h2 className="text-4xl font-extrabold text-white text-center mb-8">Create Order</h2>
+
+      {/* Customer Info */}
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <div>
+          <label className="block text-white font-semibold">Customer Name</label>
+          <input
+            type="text"
+            name="CustomerName"
+            value={form.CustomerName}
+            onChange={handleInputChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Billed By</label>
+          <input
+            type="text"
+            name="BilledBy"
+            value={form.BilledBy}
+            onChange={handleInputChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Date and Invoice Number */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div>
+          <label className="block text-white font-semibold">Date</label>
+          <input
+            type="text"
+            name="Date"
+            value={form.Date}
+            readOnly
+            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Invoice Number</label>
+          <input
+            type="text"
+            name="InvoiceNumber"
+            value={form.InvoiceNumber}
+            readOnly
+            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Bag Details */}
+      <h3 className="text-3xl font-bold text-white mb-6">Bag Details</h3>
+      <div className="grid grid-cols-2 gap-6">
+        <div>
+          <label className="block text-white font-semibold">Bag Code</label>
+          <input
+            type="text"
+            name="BagCode"
+            value={currentBag.BagCode}
+            onChange={handleBagChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Bag Colour</label>
+          <input
+            type="text"
+            name="BagColour"
+            value={currentBag.BagColour}
+            onChange={handleBagChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Bag Quantity</label>
+          <input
+            type="number"
+            name="BagQuantity"
+            value={currentBag.BagQuantity}
+            onChange={handleBagChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Bag Price</label>
+          <input
+            type="number"
+            name="BagPrice"
+            value={currentBag.BagPrice}
+            onChange={handleBagChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Bag Discount</label>
+          <input
+            type="number"
+            name="BagDiscount"
+            value={currentBag.BagDiscount}
+            onChange={handleBagChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">Total</label>
+          <input
+            type="text"
+            value={currentBag.BagTotal}
+            readOnly
+            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
+          />
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={addBag}
+        className="block mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md"
+      >
+        Add Bag
+      </button>
+
+      {/* Grand Total */}
+      <div className="mt-10 grid grid-cols-2 gap-6">
+        <div>
+          <label className="block text-white font-semibold">Last Discount</label>
+          <input
+            type="number"
+            name="LastDiscount"
+            value={form.LastDiscount}
+            onChange={handleInputChange}
+            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-white font-semibold">SubTotal</label>
+          <input
+            type="text"
+            value={form.SubTotal}
+            readOnly
+            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="block w-full mt-8 px-6 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold text-xl rounded-lg hover:bg-gradient-to-l shadow-lg"
+      >
+        Submit Order
+      </button>
+    </form>
+  );
 };
 
-export default OrderTable;
+export default OrderForm;
