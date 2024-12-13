@@ -7,6 +7,8 @@ import Baglist from './components/Baglist';
 import AddBagForm from './components/Addbag';
 import UpdateData from './components/Updatedata';
 import OrderTable from './components/Addorder'; // Import OrderTable component
+import Orderlist from './components/orderList'; // Import Orderlist component
+import ShowOrder from './components/ShowOrder'; // Import ShowOrder component
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,10 +18,10 @@ const App = () => {
       <div className="flex flex-col h-screen">
         {isLoggedIn && <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />}
         
-        <div className="flex flex-1 mt-0">
+        <div className={`flex flex-1 ${isLoggedIn ? 'mt-24' : ''}`}> {/* Conditionally apply margin-top */}
           {isLoggedIn && <Sidebar />}
 
-          <div className="relative flex-1 flex justify-center items-center overflow-hidden">
+          <div className={`flex-1 flex justify-center items-center overflow-auto ${isLoggedIn ? 'ml-64' : ''}`}> {/* Conditionally apply margin-left */}
             {!isLoggedIn && (
               <>
                 <div
@@ -47,6 +49,8 @@ const App = () => {
                   <Route path="/add-new-bag" element={<AddBagForm />} />
                   <Route path="/update-stock/:id" element={<UpdateData />} />
                   <Route path="/create-order" element={<OrderTable />} /> {/* Add route for OrderTable */}
+                  <Route path="/orders-list" element={<Orderlist />} /> {/* Add route for Orderlist */}
+                  <Route path="/order-details/:invoiceNumber" element={<ShowOrder />} /> {/* Add route for ShowOrder */}
                   {/* Add other routes as needed */}
                 </Routes>
               </div>

@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import debounce from "lodash.debounce";
+
+const generateInvoiceNumber = () => {
+  const now = new Date();
+  return `INV${now.getFullYear()}${("0" + (now.getMonth() + 1)).slice(-2)}${("0" + now.getDate()).slice(-2)}${now
+    .toTimeString()
+    .slice(0, 8)
+    .replace(/:/g, "")}`;
+};
 
 const OrderForm = () => {
   const [form, setForm] = useState({
     CustomerName: "",
     Date: new Date().toLocaleString(),
     InvoiceNumber: generateInvoiceNumber(),
-    bags: [],
+    Bags: [],
     GrandTotal: 0,
     LastDiscount: 0,
     SubTotal: 0,
@@ -16,17 +25,14 @@ const OrderForm = () => {
   const [currentBag, setCurrentBag] = useState({
     BagCode: "",
     BagColour: "",
-    BagQuantity: 0,
-    BagPrice: 0,
-    BagDiscount: 0,
+    BagQuantity: "",
+    BagPrice: "",
+    BagDiscount: "",
     BagTotal: 0,
   });
 
   useEffect(() => {
-    const bagTotal =
-      currentBag.BagPrice *
-      currentBag.BagQuantity *
-      (1 - currentBag.BagDiscount / 100);
+    const bagTotal = currentBag.BagPrice * currentBag.BagQuantity * (1 - currentBag.BagDiscount / 100);
     setCurrentBag((prevBag) => ({
       ...prevBag,
       BagTotal: bagTotal.toFixed(2),
@@ -34,45 +40,32 @@ const OrderForm = () => {
   }, [currentBag.BagPrice, currentBag.BagQuantity, currentBag.BagDiscount]);
 
   useEffect(() => {
-    const grandTotal = form.bags.reduce(
-      (acc, bag) => acc + parseFloat(bag.BagTotal),
-      0
-    );
+    const grandTotal = form.Bags.reduce((acc, bag) => acc + parseFloat(bag.BagTotal || 0), 0);
     const subTotal = grandTotal - grandTotal * (form.LastDiscount / 100);
     setForm((prevForm) => ({
       ...prevForm,
       GrandTotal: grandTotal.toFixed(2),
       SubTotal: subTotal.toFixed(2),
     }));
-  }, [form.bags, form.LastDiscount]);
-
-  function generateInvoiceNumber() {
-    const now = new Date();
-    return `INV${now.getFullYear()}${("0" + (now.getMonth() + 1)).slice(
-      -2
-    )}${("0" + now.getDate()).slice(-2)}${now
-      .toTimeString()
-      .slice(0, 8)
-      .replace(/:/g, "")}`;
-  }
+  }, [form.Bags, form.LastDiscount]);
 
   const addBag = () => {
-    const updatedBags = [...form.bags, { ...currentBag }];
+    const updatedBags = [...form.Bags, { ...currentBag }];
     setForm((prevForm) => ({
       ...prevForm,
-      bags: updatedBags,
+      Bags: updatedBags,
     }));
     setCurrentBag({
       BagCode: "",
       BagColour: "",
-      BagQuantity: 0,
-      BagPrice: 0,
-      BagDiscount: 0,
+      BagQuantity: "",
+      BagPrice: "",
+      BagDiscount: "",
       BagTotal: 0,
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = debounce((e) => {
     const { name, value } = e.target;
     setForm((prevForm) => ({
       ...prevForm,
@@ -86,7 +79,7 @@ const OrderForm = () => {
         SubTotal: subTotal.toFixed(2),
       }));
     }
-  };
+  }, 300);
 
   const handleBagChange = (e) => {
     const { name, value } = e.target;
@@ -98,19 +91,24 @@ const OrderForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.CustomerName || !form.BilledBy) {
+      alert("Please fill in all required fields.");
+      return;
+    }
     try {
       await axios.post("http://localhost:4000/api/orders", form);
       alert("Order created successfully!");
-      setForm({
+      setForm((prevForm) => ({
+        ...prevForm,
         CustomerName: "",
-        Date: new Date().toLocaleString(),
-        InvoiceNumber: generateInvoiceNumber(),
-        bags: [],
+        BilledBy: "",
+        Bags: [],
         GrandTotal: 0,
         LastDiscount: 0,
         SubTotal: 0,
-        BilledBy: "",
-      });
+        Date: new Date().toLocaleString(),
+        InvoiceNumber: generateInvoiceNumber(),
+      }));
     } catch (error) {
       console.error(error);
       alert("Failed to create order.");
@@ -118,161 +116,229 @@ const OrderForm = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="max-w-3xl mx-auto p-8 bg-gradient-to-r from-green-400 via-teal-500 to-blue-600 rounded-xl shadow-lg"
-    >
-      <h2 className="text-4xl font-extrabold text-white text-center mb-8">Create Order</h2>
+    <div className="flex items-center justify-center min-h-screen" style={{ backgroundSize: "cover", backgroundPosition: "center" }}>
+      <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-3xl text-center text-white bg-opacity-90">
+        <h2 className="text-4xl font-semibold mb-4">Order Form</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Customer Name Field */}
+          <div className="relative">
+            <input
+              type="text"
+              id="CustomerName"
+              name="CustomerName"
+              onChange={handleInputChange}
+             
+              className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 peer"
+              required
+            />
+            <label
+              htmlFor="CustomerName"
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-blue-500 ${
+                form.CustomerName ? "top-2 text-sm text-blue-500" : ""
+              }`}
+            >
+              Customer Name
+            </label>
+          </div>
 
-      {/* Customer Info */}
-      <div className="grid grid-cols-1 gap-6 mb-6">
-        <div>
-          <label className="block text-white font-semibold">Customer Name</label>
-          <input
-            type="text"
-            name="CustomerName"
-            value={form.CustomerName}
-            onChange={handleInputChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Billed By</label>
-          <input
-            type="text"
-            name="BilledBy"
-            value={form.BilledBy}
-            onChange={handleInputChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
+          <div className="relative">
+            <input
+              type="text"
+              id="BilledBy"
+              name="BilledBy"
+              onChange={handleInputChange}
+             
+              className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 peer"
+              required
+            />
+            <label
+              htmlFor="BilledBy"
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-sm peer-focus:text-blue-500 ${
+                form.BilledBy ? "top-2 text-sm text-blue-500" : ""
+              }`}
+            >
+              Billed By
+            </label>
+          </div>
+
+          {/* Bag Details */}
+          <h3 className="text-3xl font-bold text-white mb-6">Bag Details</h3>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="relative">
+              <input
+                type="text"
+                name="BagCode"
+                value={currentBag.BagCode}
+                onChange={handleBagChange}
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Bag Code"
+              />
+              <label
+                htmlFor="BagCode"
+                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                  currentBag.BagCode && "top-1/4 text-sm"
+                }`}
+              >
+                Bag Code
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                name="BagColour"
+                value={currentBag.BagColour}
+                onChange={handleBagChange}
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Bag Colour"
+              />
+              <label
+                htmlFor="BagColour"
+                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                  currentBag.BagColour && "top-1/4 text-sm"
+                }`}
+              >
+                Bag Colour
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="number"
+                name="BagQuantity"
+                value={currentBag.BagQuantity}
+                onChange={handleBagChange}
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Bag Quantity"
+              />
+              <label
+                htmlFor="BagQuantity"
+                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                  currentBag.BagQuantity && "top-1/4 text-sm"
+                }`}
+              >
+                Bag Quantity
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                       
+                type="number"
+                name="BagPrice"
+                value={currentBag.BagPrice}
+                onChange={handleBagChange}
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Bag Price"
+              />
+              <label
+                htmlFor="BagPrice"
+                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                  currentBag.BagPrice && "top-1/4 text-sm"
+                }`}
+              >
+                Bag Price
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="number"
+                name="BagDiscount"
+                value={currentBag.BagDiscount}
+                onChange={handleBagChange}
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Bag Discount"
+              />
+              <label
+                htmlFor="BagDiscount"
+                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                  currentBag.BagDiscount && "top-1/4 text-sm"
+                }`}
+              >
+                Bag Discount
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={currentBag.BagTotal}
+                readOnly
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Bag Total"
+              />
+              <label
+                htmlFor="BagTotal"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
+              >
+                Bag Total
+              </label>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={addBag}
+            className="block mt-4 w-full py-3 rounded-full bg-orange-600 hover:bg-orange-700 transition duration-300"
+          >
+            Add Bag
+          </button>
+
+          {/* Grand Total and Subtotal */}
+          <div className="mt-10 grid grid-cols-2 gap-6">
+            <div className="relative">
+              <input
+                type="number"
+                name="LastDiscount"
+                onChange={handleInputChange}
+                value={form.LastDiscount}
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Last Discount"
+              />
+              <label
+                htmlFor="LastDiscount"
+                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                  form.LastDiscount && "top-1/4 text-sm"
+                }`}
+              >
+                Last Discount
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={`Subtotal: ${form.SubTotal}`}
+                readOnly
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <label
+                htmlFor="SubTotal"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
+              >
+                Subtotal
+              </label>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={`Grand Total: ${form.GrandTotal}`}
+                readOnly
+                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <label
+                htmlFor="GrandTotal"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
+              >
+                Grand Total
+              </label>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            className="block w-full py-3 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold transition duration-300"
+          >
+            Submit Order
+          </button>
+        </form>
       </div>
-
-      {/* Date and Invoice Number */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        <div>
-          <label className="block text-white font-semibold">Date</label>
-          <input
-            type="text"
-            name="Date"
-            value={form.Date}
-            readOnly
-            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Invoice Number</label>
-          <input
-            type="text"
-            name="InvoiceNumber"
-            value={form.InvoiceNumber}
-            readOnly
-            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      {/* Bag Details */}
-      <h3 className="text-3xl font-bold text-white mb-6">Bag Details</h3>
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <label className="block text-white font-semibold">Bag Code</label>
-          <input
-            type="text"
-            name="BagCode"
-            value={currentBag.BagCode}
-            onChange={handleBagChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Bag Colour</label>
-          <input
-            type="text"
-            name="BagColour"
-            value={currentBag.BagColour}
-            onChange={handleBagChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Bag Quantity</label>
-          <input
-            type="number"
-            name="BagQuantity"
-            value={currentBag.BagQuantity}
-            onChange={handleBagChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Bag Price</label>
-          <input
-            type="number"
-            name="BagPrice"
-            value={currentBag.BagPrice}
-            onChange={handleBagChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Bag Discount</label>
-          <input
-            type="number"
-            name="BagDiscount"
-            value={currentBag.BagDiscount}
-            onChange={handleBagChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">Total</label>
-          <input
-            type="text"
-            value={currentBag.BagTotal}
-            readOnly
-            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
-          />
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={addBag}
-        className="block mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md"
-      >
-        Add Bag
-      </button>
-
-      {/* Grand Total */}
-      <div className="mt-10 grid grid-cols-2 gap-6">
-        <div>
-          <label className="block text-white font-semibold">Last Discount</label>
-          <input
-            type="number"
-            name="LastDiscount"
-            value={form.LastDiscount}
-            onChange={handleInputChange}
-            className="w-full mt-2 p-3 rounded-lg border focus:ring focus:ring-green-300 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-white font-semibold">SubTotal</label>
-          <input
-            type="text"
-            value={form.SubTotal}
-            readOnly
-            className="w-full mt-2 p-3 rounded-lg bg-gray-100 focus:outline-none"
-          />
-        </div>
-      </div>
-
-      <button
-        type="submit"
-        className="block w-full mt-8 px-6 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white font-bold text-xl rounded-lg hover:bg-gradient-to-l shadow-lg"
-      >
-        Submit Order
-      </button>
-    </form>
+    </div>
   );
 };
 

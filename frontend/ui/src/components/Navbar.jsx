@@ -10,7 +10,7 @@ const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
   };
 
   return (
-    <nav className="bg-black text-white px-8 py-4 shadow-lg mt-2 mb-2">
+    <nav className="fixed top-0 left-0 right-0 bg-black text-white px-8 py-4 shadow-lg z-50 border-b-4 border-blue-300"> {/* Corrected light blue border */}
       <div className="container mx-auto flex justify-between items-center">
         <div className="text-2xl font-bold cursor-pointer hover:text-orange-500 transition">
           Dmax Lanka PVT LTD

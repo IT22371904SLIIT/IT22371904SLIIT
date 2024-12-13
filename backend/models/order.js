@@ -1,21 +1,21 @@
 const mongoose = require('mongoose');
 
-const OrderSchema = new mongoose.Schema({
+const BagSchema = new mongoose.Schema({
   BagCode: {
     type: String,
-    required: false, // Changed to optional
+    required: false,
   },
   BagColour: {
     type: String,
-    required: false, // Changed to optional
+    required: false,
   },
   BagQuantity: {
     type: Number,
-    required: false, // Changed to optional
+    required: false,
   },
   BagPrice: {
     type: Number,
-    required: false, // Changed to optional
+    required: false,
   },
   BagDiscount: {
     type: Number,
@@ -23,8 +23,12 @@ const OrderSchema = new mongoose.Schema({
   },
   BagTotal: {
     type: Number,
-    required: false, // Changed to optional
+    required: false,
   },
+});
+
+const OrderSchema = new mongoose.Schema({
+  Bags: [BagSchema], // Array of bag details
   CustomerName: {
     type: String,
     required: true,

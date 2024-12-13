@@ -47,76 +47,114 @@ const AddBagForm = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Add New Bag</h1>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      <form className="w-full max-w-lg bg-white p-8 rounded-lg shadow-lg" onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="code">
-            Code
-          </label>
-          <input
-            type="text"
-            name="code"
-            id="code"
-            value={formData.code}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="colour">
-            Colour
-          </label>
-          <input
-            type="text"
-            name="colour"
-            id="colour"
-            value={formData.colour}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="quantity">
-            Quantity
-          </label>
-          <input
-            type="number"
-            name="quantity"
-            id="quantity"
-            value={formData.quantity}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="price">
-            Price
-          </label>
-          <input
-            type="number"
-            name="price"
-            id="price"
-            value={formData.price}
-            onChange={handleChange}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
-        <div className="flex items-center justify-between">
+    <div
+      className="flex items-center justify-center min-h-screen"
+      style={{
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm text-center text-white bg-opacity-90">
+        <h2 className="text-3xl font-semibold mb-4">Add New Bag</h2>
+        <p className="mb-6 text-gray-400">Please enter the bag details below!</p>
+
+        {error && <div className="text-red-500 mb-4">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <input
+              type="text"
+              id="code"
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Code"
+              required
+            />
+            <label
+              htmlFor="code"
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                formData.code && 'top-1/4 text-sm'
+              }`}
+            >
+              Code
+            </label>
+          </div>
+
+          <div className="relative">
+            <input
+              type="text"
+              id="colour"
+              name="colour"
+              value={formData.colour}
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Colour"
+              required
+            />
+            <label
+              htmlFor="colour"
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                formData.colour && 'top-1/4 text-sm'
+              }`}
+            >
+              Colour
+            </label>
+          </div>
+
+          <div className="relative">
+            <input
+              type="number"
+              id="quantity"
+              name="quantity"
+              value={formData.quantity}
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Quantity"
+              required
+            />
+            <label
+              htmlFor="quantity"
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                formData.quantity && 'top-1/4 text-sm'
+              }`}
+            >
+              Quantity
+            </label>
+          </div>
+
+          <div className="relative">
+            <input
+              type="number"
+              id="price"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Price"
+              required
+            />
+            <label
+              htmlFor="price"
+              className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                formData.price && 'top-1/4 text-sm'
+              }`}
+            >
+              Price
+            </label>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full py-3 rounded-full bg-orange-600 hover:bg-orange-700 transition duration-300 ${
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             {loading ? 'Adding...' : 'Add to Stock'}
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
