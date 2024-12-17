@@ -122,7 +122,7 @@ const StockTable = () => {
                       </button>
                       <button
                         onClick={() => handleDelete(stock._id)}
-                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
                       >
                         Delete
                       </button>

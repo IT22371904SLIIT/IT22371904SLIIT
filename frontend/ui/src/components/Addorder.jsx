@@ -31,6 +31,8 @@ const OrderForm = () => {
     BagTotal: 0,
   });
 
+  const [stockError, setStockError] = useState("");
+
   useEffect(() => {
     const bagTotal = currentBag.BagPrice * currentBag.BagQuantity * (1 - currentBag.BagDiscount / 100);
     setCurrentBag((prevBag) => ({
@@ -50,6 +52,10 @@ const OrderForm = () => {
   }, [form.Bags, form.LastDiscount]);
 
   const addBag = () => {
+    if (stockError) {
+      alert(stockError);
+      return;
+    }
     const updatedBags = [...form.Bags, { ...currentBag }];
     setForm((prevForm) => ({
       ...prevForm,
@@ -81,12 +87,46 @@ const OrderForm = () => {
     }
   }, 300);
 
-  const handleBagChange = (e) => {
+  const handleBagChange = async (e) => {
     const { name, value } = e.target;
     setCurrentBag((prevBag) => ({
       ...prevBag,
       [name]: value,
     }));
+
+    if (name === "BagCode") {
+      try {
+        const response = await axios.get(`http://localhost:4000/api/stocks/${value}`);
+        const stock = response.data;
+        setCurrentBag((prevBag) => ({
+          ...prevBag,
+          BagPrice: stock.price,
+        }));
+        setStockError("");
+      } catch (error) {
+        console.error("Error fetching stock data", error);
+        if (error.response && error.response.status === 400) {
+          setStockError("Invalid Bag Code or Bad Request");
+        } else {
+          setStockError("Error fetching stock data");
+        }
+      }
+    }
+
+    if (name === "BagQuantity") {
+      try {
+        const response = await axios.get(`http://localhost:4000/api/stocks/${currentBag.BagCode}`);
+        const stock = response.data;
+        if (value > stock.quantity) {
+          setStockError(`Only ${stock.quantity} items available in stock`);
+        } else {
+          setStockError("");
+        }
+      } catch (error) {
+        console.error("Error fetching stock data", error);
+        setStockError("Error checking stock availability");
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -98,17 +138,22 @@ const OrderForm = () => {
     try {
       await axios.post("http://localhost:4000/api/orders", form);
       alert("Order created successfully!");
-      setForm((prevForm) => ({
-        ...prevForm,
+      // Update stock quantities
+      for (const bag of form.Bags) {
+        await axios.put(`http://localhost:4000/api/stocks/${bag.BagCode}`, {
+          quantity: -bag.BagQuantity,
+        });
+      }
+      setForm({
         CustomerName: "",
-        BilledBy: "",
+        Date: new Date().toLocaleString(),
+        InvoiceNumber: generateInvoiceNumber(),
         Bags: [],
         GrandTotal: 0,
         LastDiscount: 0,
         SubTotal: 0,
-        Date: new Date().toLocaleString(),
-        InvoiceNumber: generateInvoiceNumber(),
-      }));
+        BilledBy: "",
+      });
     } catch (error) {
       console.error(error);
       alert("Failed to create order.");
@@ -127,7 +172,6 @@ const OrderForm = () => {
               id="CustomerName"
               name="CustomerName"
               onChange={handleInputChange}
-             
               className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 peer"
               required
             />
@@ -147,7 +191,6 @@ const OrderForm = () => {
               id="BilledBy"
               name="BilledBy"
               onChange={handleInputChange}
-             
               className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 peer"
               required
             />
@@ -192,154 +235,156 @@ const OrderForm = () => {
                 placeholder="Bag Colour"
               />
               <label
-                htmlFor="BagColour"
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
-                  currentBag.BagColour && "top-1/4 text-sm"
-                }`}
-              >
-                Bag Colour
-              </label>
+               
+                  htmlFor="BagColour"
+                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                    currentBag.BagColour && "top-1/4 text-sm"
+                  }`}
+                >
+                  Bag Colour
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  name="BagQuantity"
+                  value={currentBag.BagQuantity}
+                  onChange={handleBagChange}
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Bag Quantity"
+                />
+                <label
+                  htmlFor="BagQuantity"
+                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                    currentBag.BagQuantity && "top-1/4 text-sm"
+                  }`}
+                >
+                  Bag Quantity
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  name="BagPrice"
+                  value={currentBag.BagPrice}
+                  onChange={handleBagChange}
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Bag Price"
+                  readOnly
+                />
+                <label
+                  htmlFor="BagPrice"
+                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                    currentBag.BagPrice && "top-1/4 text-sm"
+                  }`}
+                >
+                  Bag Price
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  name="BagDiscount"
+                  value={currentBag.BagDiscount}
+                  onChange={handleBagChange}
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Bag Discount"
+                />
+                <label
+                  htmlFor="BagDiscount"
+                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                    currentBag.BagDiscount && "top-1/4 text-sm"
+                  }`}
+                >
+                  Bag Discount
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={currentBag.BagTotal}
+                  readOnly
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Bag Total"
+                />
+                <label
+                  htmlFor="BagTotal"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
+                >
+                  Bag Total
+                </label>
+              </div>
             </div>
-            <div className="relative">
-              <input
-                type="number"
-                name="BagQuantity"
-                value={currentBag.BagQuantity}
-                onChange={handleBagChange}
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Bag Quantity"
-              />
-              <label
-                htmlFor="BagQuantity"
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
-                  currentBag.BagQuantity && "top-1/4 text-sm"
-                }`}
-              >
-                Bag Quantity
-              </label>
+            {stockError && <p className="text-red-500">{stockError}</p>}
+            <button
+              type="button"
+              onClick={addBag}
+              className="block mt-4 w-full py-3 rounded-full bg-orange-600 hover:bg-orange-700 transition duration-300"
+            >
+              Add Bag
+            </button>
+  
+            {/* Grand Total and Subtotal */}
+            <div className="mt-10 grid grid-cols-2 gap-6">
+              <div className="relative">
+                <input
+                  type="number"
+                  name="LastDiscount"
+                  onChange={handleInputChange}
+                  value={form.LastDiscount}
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Last Discount"
+                />
+                <label
+                  htmlFor="LastDiscount"
+                  className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
+                    form.LastDiscount && "top-1/4 text-sm"
+                  }`}
+                >
+                  Last Discount
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={`Subtotal: ${form.SubTotal}`}
+                  readOnly
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="SubTotal"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
+                >
+                  Subtotal
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={`Grand Total: ${form.GrandTotal}`}
+                  readOnly
+                  className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="GrandTotal"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
+                >
+                  Grand Total
+                </label>
+              </div>
             </div>
-            <div className="relative">
-              <input
-                       
-                type="number"
-                name="BagPrice"
-                value={currentBag.BagPrice}
-                onChange={handleBagChange}
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Bag Price"
-              />
-              <label
-                htmlFor="BagPrice"
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
-                  currentBag.BagPrice && "top-1/4 text-sm"
-                }`}
-              >
-                Bag Price
-              </label>
-            </div>
-            <div className="relative">
-              <input
-                type="number"
-                name="BagDiscount"
-                value={currentBag.BagDiscount}
-                onChange={handleBagChange}
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Bag Discount"
-              />
-              <label
-                htmlFor="BagDiscount"
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
-                  currentBag.BagDiscount && "top-1/4 text-sm"
-                }`}
-              >
-                Bag Discount
-              </label>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                value={currentBag.BagTotal}
-                readOnly
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Bag Total"
-              />
-              <label
-                htmlFor="BagTotal"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
-              >
-                Bag Total
-              </label>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={addBag}
-            className="block mt-4 w-full py-3 rounded-full bg-orange-600 hover:bg-orange-700 transition duration-300"
-          >
-            Add Bag
-          </button>
-
-          {/* Grand Total and Subtotal */}
-          <div className="mt-10 grid grid-cols-2 gap-6">
-            <div className="relative">
-              <input
-                type="number"
-                name="LastDiscount"
-                onChange={handleInputChange}
-                value={form.LastDiscount}
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Last Discount"
-              />
-              <label
-                htmlFor="LastDiscount"
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 ${
-                  form.LastDiscount && "top-1/4 text-sm"
-                }`}
-              >
-                Last Discount
-              </label>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                value={`Subtotal: ${form.SubTotal}`}
-                readOnly
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <label
-                htmlFor="SubTotal"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
-              >
-                Subtotal
-              </label>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                value={`Grand Total: ${form.GrandTotal}`}
-                readOnly
-                className="w-full px-4 py-3 bg-transparent border border-blue-500 rounded-full text-white placeholder-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <label
-                htmlFor="GrandTotal"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-all duration-300 top-1/4 text-sm"
-              >
-                Grand Total
-              </label>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="block w-full py-3 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold transition duration-300"
-          >
-            Submit Order
-          </button>
-        </form>
+  
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="block w-full py-3 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold transition duration-300"
+            >
+              Submit Order
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
-  );
-};
-
-export default OrderForm;
+    );
+  };
+  
+  export default OrderForm;

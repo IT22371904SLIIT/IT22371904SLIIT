@@ -50,7 +50,7 @@ const App = () => {
                   <Route path="/update-stock/:id" element={<UpdateData />} />
                   <Route path="/create-order" element={<OrderTable />} /> {/* Add route for OrderTable */}
                   <Route path="/orders-list" element={<Orderlist />} /> {/* Add route for Orderlist */}
-                  <Route path="/order-details/:invoiceNumber" element={<ShowOrder />} /> {/* Add route for ShowOrder */}
+                  <Route path="/order-details/:InvoiceNumber" element={<ShowOrder />} /> {/* Add route for ShowOrder */}
                   {/* Add other routes as needed */}
                 </Routes>
               </div>

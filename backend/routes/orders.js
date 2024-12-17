@@ -40,6 +40,18 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Fetch a single order by InvoiceNumber
+router.get("/invoice/:invoiceNumber", async (req, res) => {
+  try {
+    const order = await Order.findOne({ InvoiceNumber: req.params.invoiceNumber });
+    if (!order) return res.status(404).json({ msg: "Order not found." });
+    res.json(order);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ msg: "Failed to fetch order." });
+  }
+});
+
 // Update an order by ID
 router.put("/:id", async (req, res) => {
   try {
@@ -53,9 +65,9 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete an order by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/invoice/:invoiceNumber", async (req, res) => {
   try {
-    const deletedOrder = await Order.findByIdAndDelete(req.params.id);
+    const deletedOrder = await Order.findOneAndDelete({ InvoiceNumber: req.params.invoiceNumber });
     if (!deletedOrder) return res.status(404).json({ msg: "Order not found." });
     res.json({ msg: "Deleted successfully." });
   } catch (err) {

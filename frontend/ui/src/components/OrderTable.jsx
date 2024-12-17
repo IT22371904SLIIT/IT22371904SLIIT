@@ -10,7 +10,9 @@ const OrderTable = () => {
   useEffect(() => {
     axios.get('http://localhost:4000/api/orders')
       .then(response => {
-        setOrders(response.data);
+        // Sort orders by date in descending order to show latest orders first
+        const sortedOrders = response.data.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+        setOrders(sortedOrders);
       })
       .catch(error => {
         console.error("There was an error fetching the orders!", error);
@@ -21,6 +23,19 @@ const OrderTable = () => {
   // Function to navigate to order details page
   const handleShow = (invoiceNumber) => {
     navigate(`/order-details/${invoiceNumber}`);
+  };
+
+  // Function to delete an order by invoice number
+  const handleDelete = (invoiceNumber) => {
+    axios.delete(`http://localhost:4000/api/orders/invoice/${invoiceNumber}`)
+      .then(response => {
+        // Remove the deleted order from the state
+        setOrders(orders.filter(order => order.InvoiceNumber !== invoiceNumber));
+      })
+      .catch(error => {
+        console.error("There was an error deleting the order!", error);
+        setError("There was an error deleting the order.");
+      });
   };
 
   return (
@@ -51,9 +66,15 @@ const OrderTable = () => {
                     <td className="py-4 px-6 text-gray-700">
                       <button
                         onClick={() => handleShow(order.InvoiceNumber)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mr-2"
                       >
                         Show
+                      </button>
+                      <button
+                        onClick={() => handleDelete(order.InvoiceNumber)}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
